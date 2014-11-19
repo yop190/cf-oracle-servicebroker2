@@ -1,11 +1,14 @@
 package com.pivotal.cf.broker.services.impl;
 
+import java.io.File;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +20,7 @@ import com.pivotal.cf.broker.repositories.PlanRepository;
 import com.pivotal.cf.broker.repositories.ServiceInstanceRepository;
 import com.pivotal.cf.broker.services.DatabaseService;
 import com.pivotal.cf.broker.utils.StringUtils;
+import com.sun.org.apache.xerces.internal.util.URI;
 
 @Service
 public class OracleDatabaseService implements DatabaseService {
@@ -28,6 +32,9 @@ public class OracleDatabaseService implements DatabaseService {
 	
 	@Autowired
 	private ServiceInstanceRepository serviceInstanceRepository;
+	
+	@Autowired
+	private Environment env;
 	
 	final Logger logger = LoggerFactory.getLogger(OracleDatabaseService.class);
 	
@@ -61,14 +68,15 @@ public class OracleDatabaseService implements DatabaseService {
 		template.execute(command);
 		return true;
 	}
+	
 
 	@Override
 	public boolean createTableSpaces(ServiceInstance instance) {
 		Plan plan = planRepository.findOne(instance.getPlanId());
 		String tablespaceName = StringUtils.randomString(12);
 		instance.getConfig().put("tablespace",tablespaceName);
-		String command = String.format(CREATE_TABLESPACE, tablespaceName, tablespaceName+".dat",plan.getMetadata().getOther().get("max_size"));
-		String tempCommand = String.format(CREATE_TEMP_TABLESPACE,tablespaceName+"_temp",tablespaceName+"_temp.dat",plan.getMetadata().getOther().get("max_size"));
+		String command = String.format(CREATE_TABLESPACE, tablespaceName, getFileStorage(tablespaceName).getAbsolutePath(),plan.getMetadata().getOther().get("max_size"));
+		String tempCommand = String.format(CREATE_TEMP_TABLESPACE,tablespaceName+"_temp",getFileStorage(tablespaceName+"_temp").getAbsolutePath(),plan.getMetadata().getOther().get("max_size"));
 		logger.debug(command);
 		logger.debug(tempCommand);
 		template.execute(command);
@@ -112,4 +120,11 @@ public class OracleDatabaseService implements DatabaseService {
 	}
 
 
+	private File getFileStorage(String tablespaceName) {
+		
+		String dir = env.getProperty("oracle.database.tablespace.dir",System.getProperty("user.dir"));
+		String extension  = env.getProperty("oracle.database.tablespace.extension",".dat");
+		return new File(dir,tablespaceName + extension);
+		
+	}
 }

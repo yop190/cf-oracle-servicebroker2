@@ -1,10 +1,13 @@
 package com.pivotal.cf.broker.services.impl;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
@@ -46,6 +49,9 @@ public class ServiceManagementImpl extends BaseService implements ServiceManagem
 	@Autowired
 	private Environment env;
 	
+	final Logger logger = LoggerFactory.getLogger(ServiceManagementImpl.class);
+
+	
 	@Override
 	public ServiceInstance createInstance(CreateServiceInstanceRequest serviceRequest) {
 		ServiceDefinition serviceDefinition = serviceRepository.findOne(serviceRequest.getServiceDefinitionId());
@@ -61,7 +67,10 @@ public class ServiceManagementImpl extends BaseService implements ServiceManagem
 		}
 		ServiceInstance instance = new ServiceInstance(serviceRequest.getServiceInstanceId(), serviceDefinition.getId(), plan.getId(), serviceRequest.getOrganizationGuid(), serviceRequest.getSpaceGuid(), "");
 		String tablespaceName = StringUtils.randomString(12);
-		instance.getConfig().put("tablespace",tablespaceName);
+		instance.getConfig().put("tablespaceName",tablespaceName);
+		instance.getConfig().put("tablespaceDir",env.getProperty("oracle.database.tablespace.dir",System.getProperty("user.dir")));		
+		instance.getConfig().put("tablespaceExtension",env.getProperty("oracle.database.tablespace.extension",".dat"));		
+		
 		Map<String,Object> model = new HashMap<>();
 		model.put("plan",plan);
 		model.put("instance",instance);
@@ -139,5 +148,5 @@ public class ServiceManagementImpl extends BaseService implements ServiceManagem
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 }

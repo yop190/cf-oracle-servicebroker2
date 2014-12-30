@@ -82,10 +82,10 @@ public class OracleDatabaseService implements DatabaseService {
         if (init_size == null)
           init_size = "64M";
         instance.getConfig().put("init_size",init_size);
-
 		instance.getConfig().put("tablespace",tablespaceName);
-		String command = String.format(CREATE_TABLESPACE, tablespaceName, getFileStorage(tablespaceName).getAbsolutePath(),init_size, plan.getMetadata().getOther().get("max_size"));
-		String tempCommand = String.format(CREATE_TEMP_TABLESPACE,tablespaceName+"_temp",getFileStorage(tablespaceName+"_temp").getAbsolutePath(),plan.getMetadata().getOther().get("max_size"));
+		
+		String command = String.format(CREATE_TABLESPACE, tablespaceName, getTablespaceLocation(tablespaceName).getAbsolutePath(),init_size, plan.getMetadata().getOther().get("max_size"));
+		String tempCommand = String.format(CREATE_TEMP_TABLESPACE,tablespaceName+"_temp",getTablespaceLocation(tablespaceName+"_temp").getAbsolutePath(),plan.getMetadata().getOther().get("max_size"));
 		logger.debug(command);
 		logger.debug(tempCommand);
 		template.execute(command);
@@ -129,11 +129,13 @@ public class OracleDatabaseService implements DatabaseService {
 	}
 
 
-	private File getFileStorage(String tablespaceName) {
+	private File getTablespaceLocation(String tablespaceName) {
 		
 		String dir = env.getProperty("oracle.database.tablespace.dir",System.getProperty("user.dir"));
 		String extension  = env.getProperty("oracle.database.tablespace.extension",".dat");
-		return new File(dir,tablespaceName + extension);
+		File fileStorage = new File(dir,tablespaceName + extension);
+		logger.debug(String.format("Use '%s' as file storage for the table space %s",fileStorage,tablespaceName));
+		return fileStorage;
 		
 	}
 }

@@ -19,6 +19,8 @@ The config file is located at `src/main/resources/config/application.properties`
 oracle.host=localhost
 oracle.port=1521
 oracle.service=xe
+#oracle.database.tablespace.dir=/tmp
+#oracle.database.tablespace.extension=.dbf
 spring.jpa.hibernate.ddl-auto=create-update
 #application connection info
 broker.datasource.driverClassName=oracle.jdbc.OracleDriver
